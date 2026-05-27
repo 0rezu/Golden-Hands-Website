@@ -1,5 +1,53 @@
 // Home page
-const { useState } = React;
+const { useState, useRef, useEffect } = React;
+
+function IntroVideo({ onDone }) {
+  const [fading, setFading] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const vidRef = useRef(null);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  const dismiss = () => {
+    setFading(true);
+    document.body.style.overflow = "";
+    setTimeout(onDone, 900);
+  };
+
+  const toggleMute = () => {
+    if (vidRef.current) vidRef.current.muted = !muted;
+    setMuted(m => !m);
+  };
+
+  return (
+    <div className={"intro-overlay" + (fading ? " fade-out" : "")}>
+      <video
+        ref={vidRef}
+        src="assets/goldenhandsintrovid.mp4"
+        autoPlay
+        muted
+        playsInline
+        onEnded={dismiss}
+        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+      />
+      <div className="intro-overlay__logo">
+        <img src="assets/logo.png" alt="Golden Hands" style={{ width: 72, height: 72, objectFit: "contain" }} />
+        <span>GOLDEN HANDS <em>Barbershop</em></span>
+      </div>
+      <div className="intro-overlay__controls">
+        <button className="intro-overlay__mute" onClick={toggleMute} aria-label="Toggle sound">
+          {muted ? "🔇 Sound Off" : "🔊 Sound On"}
+        </button>
+        <button className="intro-overlay__skip" onClick={dismiss}>
+          Enter Site <span>→</span>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function Hero({ onBook }) {
   return (
@@ -198,15 +246,19 @@ function VisitSection() {
 }
 
 function Home() {
+  const [introDone, setIntroDone] = useState(false);
   const { PageShell } = window.GH;
   return (
-    <PageShell current="home">
-      <Hero onBook={() => window.__openBooking()} />
-      <FeaturedServices onBook={(id) => window.__openBooking(id)} />
-      <AboutTeaser />
-      <ReviewsTeaser />
-      <VisitSection />
-    </PageShell>
+    <>
+      {!introDone && <IntroVideo onDone={() => setIntroDone(true)} />}
+      <PageShell current="home">
+        <Hero onBook={() => window.__openBooking()} />
+        <FeaturedServices onBook={(id) => window.__openBooking(id)} />
+        <AboutTeaser />
+        <ReviewsTeaser />
+        <VisitSection />
+      </PageShell>
+    </>
   );
 }
 

@@ -1,4 +1,71 @@
 /* ============================================
+   INTRO VIDEO OVERLAY
+   ============================================ */
+.intro-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #000;
+  transition: opacity 0.9s ease;
+}
+.intro-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+.intro-overlay__logo {
+  position: absolute; top: 36px; left: 40px;
+  display: flex; align-items: center; gap: 14px;
+  z-index: 2;
+  font-family: var(--serif);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.85);
+}
+.intro-overlay__logo em {
+  font-family: var(--script);
+  font-style: normal;
+  color: var(--gold);
+  font-size: 20px;
+  letter-spacing: 0;
+  margin-left: 4px;
+}
+
+.intro-overlay__controls {
+  position: absolute; bottom: 40px; right: 40px;
+  display: flex; align-items: center; gap: 14px;
+  z-index: 2;
+}
+.intro-overlay__mute {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px 0;
+  transition: color 0.2s;
+}
+.intro-overlay__mute:hover { color: rgba(255,255,255,0.8); }
+.intro-overlay__skip {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.7);
+  background: none;
+  border: 1px solid rgba(255,255,255,0.25);
+  padding: 12px 26px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 10px;
+}
+.intro-overlay__skip:hover { color: var(--gold); border-color: var(--gold); }
+@media (max-width: 600px) {
+  .intro-overlay__controls { bottom: 24px; right: 20px; gap: 10px; }
+  .intro-overlay__logo { top: 24px; left: 20px; }
+  .intro-overlay__logo img { width: 48px; height: 48px; }
+}
+
+/* ============================================
    GOLDEN HANDS BARBERSHOP — design tokens
    ============================================ */
 :root {
