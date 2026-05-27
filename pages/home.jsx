@@ -4,15 +4,19 @@ const { useState, useRef, useEffect } = React;
 function IntroVideo({ onDone }) {
   const [goldActive, setGoldActive] = useState(false);
   const [fading, setFading] = useState(false);
-  const dismissed = useRef(false);
   const vidRef = useRef(null);
+  const scrollAcc = useRef(0);   // accumulated scroll delta in px
+  const dismissed = useRef(false);
+  const goldShown = useRef(false);
+  const SCROLL_TOTAL = 1000;     // total scroll px to reach end of intro
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    // 1.5s after video starts (from the 2.25 mark), fade gold in
-    const t = setTimeout(() => setGoldActive(true), 1500);
-    return () => clearTimeout(t);
-  }, []);
+  // Seek to 2.25s and pause — no autoplay
+  const onCanPlay = () => {
+    const v = vidRef.current;
+    if (!v) return;
+    v.currentTime = 2.25;
+    v.pause();
+  };
 
   const dismiss = () => {
     if (dismissed.current) return;
@@ -21,12 +25,38 @@ function IntroVideo({ onDone }) {
     setTimeout(onDone, 1300);
   };
 
-  // Scroll / swipe up to exit
   useEffect(() => {
-    const onWheel = (e) => { if (e.deltaY > 20) dismiss(); };
-    let touchStartY = 0;
-    const onTouchStart = (e) => { touchStartY = e.touches[0].clientY; };
-    const onTouchMove = (e) => { if (touchStartY - e.touches[0].clientY > 40) dismiss(); };
+    document.body.style.overflow = "hidden";
+
+    const scrub = (delta) => {
+      if (dismissed.current) return;
+      const v = vidRef.current;
+      if (!v || !v.duration) return;
+
+      scrollAcc.current = Math.max(0, Math.min(SCROLL_TOTAL, scrollAcc.current + delta));
+      const progress = scrollAcc.current / SCROLL_TOTAL;
+
+      // Scrub video: from 2.25s to end, driven by scroll
+      v.currentTime = 2.25 + progress * (v.duration - 2.25);
+
+      // Gold fades in when video reaches the 3.75s mark (1.5s past start)
+      if (v.currentTime >= 3.75 && !goldShown.current) {
+        goldShown.current = true;
+        setGoldActive(true);
+      }
+
+      if (progress >= 1) dismiss();
+    };
+
+    const onWheel = (e) => scrub(e.deltaY);
+    let touchY = 0;
+    const onTouchStart = (e) => { touchY = e.touches[0].clientY; };
+    const onTouchMove = (e) => {
+      const d = touchY - e.touches[0].clientY;
+      touchY = e.touches[0].clientY;
+      scrub(d * 2.5);
+    };
+
     window.addEventListener("wheel", onWheel, { passive: true });
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchmove", onTouchMove, { passive: true });
@@ -42,11 +72,10 @@ function IntroVideo({ onDone }) {
       <video
         ref={vidRef}
         src="assets/goldenhandsintrovid.mp4"
-        autoPlay
         muted
         playsInline
-        onLoadedMetadata={() => { if (vidRef.current) vidRef.current.currentTime = 2.25; }}
-        onEnded={dismiss}
+        preload="auto"
+        onCanPlay={onCanPlay}
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
       />
       <div className={"intro-overlay__gold" + (goldActive ? " active" : "")} />
@@ -54,7 +83,7 @@ function IntroVideo({ onDone }) {
         <img src="assets/logo.png" alt="Golden Hands" style={{ width: 64, height: 64, objectFit: "contain" }} />
         <span>GOLDEN HANDS <em>Barbershop</em></span>
       </div>
-      <div className={"intro-scroll-hint" + (goldActive ? " visible" : "")}>
+      <div className="intro-scroll-hint visible">
         <span>Scroll to Enter</span>
         <div className="intro-scroll-hint__arrow" />
       </div>
