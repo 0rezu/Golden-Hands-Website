@@ -8,12 +8,11 @@ function IntroVideo({ onDone }) {
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    // scroll stays locked — Home handles the 750ms unlock after fade
   }, []);
 
   const dismiss = () => {
     setFading(true);
-    document.body.style.overflow = "";
     setTimeout(onDone, 900);
   };
 
@@ -30,6 +29,7 @@ function IntroVideo({ onDone }) {
         autoPlay
         muted
         playsInline
+        onLoadedMetadata={() => { if (vidRef.current) vidRef.current.currentTime = 2.25; }}
         onEnded={dismiss}
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
       />
@@ -248,9 +248,15 @@ function VisitSection() {
 function Home() {
   const [introDone, setIntroDone] = useState(false);
   const { PageShell } = window.GH;
+
+  const handleIntroDone = () => {
+    setIntroDone(true);
+    setTimeout(() => { document.body.style.overflow = ""; }, 750);
+  };
+
   return (
     <>
-      {!introDone && <IntroVideo onDone={() => setIntroDone(true)} />}
+      {!introDone && <IntroVideo onDone={handleIntroDone} />}
       <PageShell current="home">
         <Hero onBook={() => window.__openBooking()} />
         <FeaturedServices onBook={(id) => window.__openBooking(id)} />
