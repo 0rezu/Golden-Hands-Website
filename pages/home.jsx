@@ -5,41 +5,44 @@ function IntroVideo({ onDone }) {
   const [goldActive, setGoldActive] = useState(false);
   const [fading, setFading] = useState(false);
   const vidRef = useRef(null);
-  const scrollAcc = useRef(0);   // accumulated scroll delta in px
+  const scrollAcc = useRef(0);
   const dismissed = useRef(false);
   const goldShown = useRef(false);
-  const SCROLL_TOTAL = 1000;     // total scroll px to reach end of intro
+  const vidDuration = useRef(null); // set once loadedmetadata fires
+  const SCROLL_TOTAL = 1200;
 
-  // Seek to 2.25s and pause — no autoplay
-  const onCanPlay = () => {
+  // Store duration + seek to start point once metadata is ready
+  const onLoadedMetadata = () => {
     const v = vidRef.current;
     if (!v) return;
+    vidDuration.current = v.duration;
     v.currentTime = 2.25;
-    v.pause();
-  };
-
-  const dismiss = () => {
-    if (dismissed.current) return;
-    dismissed.current = true;
-    setFading(true);
-    setTimeout(onDone, 1300);
   };
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
 
-    const scrub = (delta) => {
+    const dismiss = () => {
+      if (dismissed.current) return;
+      dismissed.current = true;
+      setFading(true);
+      setTimeout(onDone, 1300);
+    };
+
+    const scrub = (rawDelta) => {
       if (dismissed.current) return;
       const v = vidRef.current;
-      if (!v || !v.duration) return;
+      const dur = vidDuration.current;
+      if (!v || !dur) return;
 
+      // Normalise delta — trackpads send small floats, wheels send ~100
+      const delta = Math.min(Math.abs(rawDelta), 100) * Math.sign(rawDelta);
       scrollAcc.current = Math.max(0, Math.min(SCROLL_TOTAL, scrollAcc.current + delta));
       const progress = scrollAcc.current / SCROLL_TOTAL;
 
-      // Scrub video: from 2.25s to end, driven by scroll
-      v.currentTime = 2.25 + progress * (v.duration - 2.25);
+      v.currentTime = 2.25 + progress * (dur - 2.25);
 
-      // Gold fades in when video reaches the 3.75s mark (1.5s past start)
+      // Gold wash at 1.5s past the 2.25 start mark
       if (v.currentTime >= 3.75 && !goldShown.current) {
         goldShown.current = true;
         setGoldActive(true);
@@ -54,7 +57,7 @@ function IntroVideo({ onDone }) {
     const onTouchMove = (e) => {
       const d = touchY - e.touches[0].clientY;
       touchY = e.touches[0].clientY;
-      scrub(d * 2.5);
+      scrub(d * 3);
     };
 
     window.addEventListener("wheel", onWheel, { passive: true });
@@ -65,7 +68,7 @@ function IntroVideo({ onDone }) {
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
     };
-  }, []);
+  }, [onDone]);
 
   return (
     <div className={"intro-overlay" + (fading ? " fade-out" : "")}>
@@ -75,7 +78,7 @@ function IntroVideo({ onDone }) {
         muted
         playsInline
         preload="auto"
-        onCanPlay={onCanPlay}
+        onLoadedMetadata={onLoadedMetadata}
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
       />
       <div className={"intro-overlay__gold" + (goldActive ? " active" : "")} />
