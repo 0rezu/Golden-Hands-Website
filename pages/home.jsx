@@ -1,98 +1,5 @@
 // Home page
-const { useState, useRef, useEffect } = React;
-
-function IntroVideo({ onDone }) {
-  const [goldActive, setGoldActive] = useState(false);
-  const [fading, setFading] = useState(false);
-  const vidRef = useRef(null);
-  const scrollAcc = useRef(0);
-  const dismissed = useRef(false);
-  const goldShown = useRef(false);
-  const vidDuration = useRef(null); // set once loadedmetadata fires
-  const SCROLL_TOTAL = 1200;
-
-  // Store duration + seek to start point once metadata is ready
-  const onLoadedMetadata = () => {
-    const v = vidRef.current;
-    if (!v) return;
-    vidDuration.current = v.duration;
-    v.currentTime = 2.25;
-  };
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-
-    const dismiss = () => {
-      if (dismissed.current) return;
-      dismissed.current = true;
-      setFading(true);
-      setTimeout(onDone, 1300);
-    };
-
-    const scrub = (rawDelta) => {
-      if (dismissed.current) return;
-      const v = vidRef.current;
-      const dur = vidDuration.current;
-      if (!v || !dur) return;
-
-      // Normalise delta — trackpads send small floats, wheels send ~100
-      const delta = Math.min(Math.abs(rawDelta), 100) * Math.sign(rawDelta);
-      scrollAcc.current = Math.max(0, Math.min(SCROLL_TOTAL, scrollAcc.current + delta));
-      const progress = scrollAcc.current / SCROLL_TOTAL;
-
-      v.currentTime = 2.25 + progress * (dur - 2.25);
-
-      // Gold wash at 1.5s past the 2.25 start mark
-      if (v.currentTime >= 3.75 && !goldShown.current) {
-        goldShown.current = true;
-        setGoldActive(true);
-      }
-
-      if (progress >= 1) dismiss();
-    };
-
-    const onWheel = (e) => scrub(e.deltaY);
-    let touchY = 0;
-    const onTouchStart = (e) => { touchY = e.touches[0].clientY; };
-    const onTouchMove = (e) => {
-      const d = touchY - e.touches[0].clientY;
-      touchY = e.touches[0].clientY;
-      scrub(d * 3);
-    };
-
-    window.addEventListener("wheel", onWheel, { passive: true });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-    return () => {
-      window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-    };
-  }, [onDone]);
-
-  return (
-    <div className={"intro-overlay" + (fading ? " fade-out" : "")}>
-      <video
-        ref={vidRef}
-        src="assets/goldenhandsintrovid.mp4"
-        muted
-        playsInline
-        preload="auto"
-        onLoadedMetadata={onLoadedMetadata}
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-      />
-      <div className={"intro-overlay__gold" + (goldActive ? " active" : "")} />
-      <div className="intro-overlay__logo">
-        <img src="assets/logo.png" alt="Golden Hands" style={{ width: 64, height: 64, objectFit: "contain" }} />
-        <span>GOLDEN HANDS <em>Barbershop</em></span>
-      </div>
-      <div className="intro-scroll-hint visible">
-        <span>Scroll to Enter</span>
-        <div className="intro-scroll-hint__arrow" />
-      </div>
-    </div>
-  );
-}
+const { useState } = React;
 
 function Hero({ onBook }) {
   return (
@@ -291,25 +198,15 @@ function VisitSection() {
 }
 
 function Home() {
-  const [introDone, setIntroDone] = useState(false);
   const { PageShell } = window.GH;
-
-  const handleIntroDone = () => {
-    setIntroDone(true);
-    setTimeout(() => { document.body.style.overflow = ""; }, 750);
-  };
-
   return (
-    <>
-      {!introDone && <IntroVideo onDone={handleIntroDone} />}
-      <PageShell current="home">
-        <Hero onBook={() => window.__openBooking()} />
-        <FeaturedServices onBook={(id) => window.__openBooking(id)} />
-        <AboutTeaser />
-        <ReviewsTeaser />
-        <VisitSection />
-      </PageShell>
-    </>
+    <PageShell current="home">
+      <Hero onBook={() => window.__openBooking()} />
+      <FeaturedServices onBook={(id) => window.__openBooking(id)} />
+      <AboutTeaser />
+      <ReviewsTeaser />
+      <VisitSection />
+    </PageShell>
   );
 }
 
