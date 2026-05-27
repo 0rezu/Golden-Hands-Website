@@ -4,65 +4,72 @@
 .intro-overlay {
   position: fixed; inset: 0; z-index: 9999;
   background: #000;
-  transition: opacity 0.9s ease;
+  transition: opacity 1.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .intro-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+/* Gold wash that fades in 1.5s after video starts */
+.intro-overlay__gold {
+  position: absolute; inset: 0; z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 2.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background:
+    radial-gradient(ellipse at 40% 35%, rgba(224,189,117,0.55) 0%, transparent 65%),
+    radial-gradient(ellipse at 65% 70%, rgba(201,164,92,0.45) 0%, transparent 55%),
+    linear-gradient(160deg, rgba(139,90,43,0.35) 0%, rgba(201,164,92,0.5) 50%, rgba(139,90,43,0.35) 100%);
+}
+.intro-overlay__gold.active { opacity: 1; }
 
 .intro-overlay__logo {
   position: absolute; top: 36px; left: 40px;
   display: flex; align-items: center; gap: 14px;
-  z-index: 2;
+  z-index: 3;
   font-family: var(--serif);
   font-size: 12px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255,255,255,0.9);
 }
 .intro-overlay__logo em {
   font-family: var(--script);
   font-style: normal;
-  color: var(--gold);
+  color: #f5d98a;
   font-size: 20px;
   letter-spacing: 0;
   margin-left: 4px;
 }
 
-.intro-overlay__controls {
-  position: absolute; bottom: 40px; right: 40px;
-  display: flex; align-items: center; gap: 14px;
-  z-index: 2;
-}
-.intro-overlay__mute {
+/* Scroll hint — fades in with the gold */
+.intro-scroll-hint {
+  position: absolute; bottom: 44px; left: 50%; transform: translateX(-50%);
+  z-index: 3;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 2.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
   font-family: var(--mono);
   font-size: 10px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.35em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 10px 0;
-  transition: color 0.2s;
+  color: rgba(245,217,138,0.85);
 }
-.intro-overlay__mute:hover { color: rgba(255,255,255,0.8); }
-.intro-overlay__skip {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.7);
-  background: none;
-  border: 1px solid rgba(255,255,255,0.25);
-  padding: 12px 26px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex; align-items: center; gap: 10px;
+.intro-scroll-hint.visible { opacity: 1; }
+.intro-scroll-hint__arrow {
+  width: 1px; height: 40px;
+  background: linear-gradient(to bottom, rgba(245,217,138,0.7), transparent);
+  margin: 10px auto 0;
+  animation: arrow-pulse 1.6s ease-in-out infinite;
 }
-.intro-overlay__skip:hover { color: var(--gold); border-color: var(--gold); }
+@keyframes arrow-pulse {
+  0%, 100% { opacity: 0.4; transform: scaleY(1); }
+  50%       { opacity: 1;   transform: scaleY(1.15); }
+}
+
 @media (max-width: 600px) {
-  .intro-overlay__controls { bottom: 24px; right: 20px; gap: 10px; }
   .intro-overlay__logo { top: 24px; left: 20px; }
   .intro-overlay__logo img { width: 48px; height: 48px; }
+  .intro-scroll-hint { bottom: 32px; }
 }
 
 /* ============================================

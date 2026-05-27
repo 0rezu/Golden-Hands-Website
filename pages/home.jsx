@@ -2,24 +2,40 @@
 const { useState, useRef, useEffect } = React;
 
 function IntroVideo({ onDone }) {
+  const [goldActive, setGoldActive] = useState(false);
   const [fading, setFading] = useState(false);
-  const [muted, setMuted] = useState(true);
+  const dismissed = useRef(false);
   const vidRef = useRef(null);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    // scroll stays locked — Home handles the 750ms unlock after fade
+    // 1.5s after video starts (from the 2.25 mark), fade gold in
+    const t = setTimeout(() => setGoldActive(true), 1500);
+    return () => clearTimeout(t);
   }, []);
 
   const dismiss = () => {
+    if (dismissed.current) return;
+    dismissed.current = true;
     setFading(true);
-    setTimeout(onDone, 900);
+    setTimeout(onDone, 1300);
   };
 
-  const toggleMute = () => {
-    if (vidRef.current) vidRef.current.muted = !muted;
-    setMuted(m => !m);
-  };
+  // Scroll / swipe up to exit
+  useEffect(() => {
+    const onWheel = (e) => { if (e.deltaY > 20) dismiss(); };
+    let touchStartY = 0;
+    const onTouchStart = (e) => { touchStartY = e.touches[0].clientY; };
+    const onTouchMove = (e) => { if (touchStartY - e.touches[0].clientY > 40) dismiss(); };
+    window.addEventListener("wheel", onWheel, { passive: true });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+    };
+  }, []);
 
   return (
     <div className={"intro-overlay" + (fading ? " fade-out" : "")}>
@@ -33,17 +49,14 @@ function IntroVideo({ onDone }) {
         onEnded={dismiss}
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
       />
+      <div className={"intro-overlay__gold" + (goldActive ? " active" : "")} />
       <div className="intro-overlay__logo">
-        <img src="assets/logo.png" alt="Golden Hands" style={{ width: 72, height: 72, objectFit: "contain" }} />
+        <img src="assets/logo.png" alt="Golden Hands" style={{ width: 64, height: 64, objectFit: "contain" }} />
         <span>GOLDEN HANDS <em>Barbershop</em></span>
       </div>
-      <div className="intro-overlay__controls">
-        <button className="intro-overlay__mute" onClick={toggleMute} aria-label="Toggle sound">
-          {muted ? "🔇 Sound Off" : "🔊 Sound On"}
-        </button>
-        <button className="intro-overlay__skip" onClick={dismiss}>
-          Enter Site <span>→</span>
-        </button>
+      <div className={"intro-scroll-hint" + (goldActive ? " visible" : "")}>
+        <span>Scroll to Enter</span>
+        <div className="intro-scroll-hint__arrow" />
       </div>
     </div>
   );
